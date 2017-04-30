@@ -93,6 +93,9 @@ public class TeriorTextEditor
 	 */
 	private void initialize()
 	{
+		/*
+		 * Setup the Application Frame.
+		 */
 		frame = new JFrame();
 		frame.setResizable(false);
 		frame.setBounds(0, 0, 800, 644);
@@ -100,6 +103,9 @@ public class TeriorTextEditor
 		frame.setLocationRelativeTo(null);
 		frame.setTitle(Config.TITLE);
 
+		/*
+		 * Load and apply the icon. (assets/icon.png)
+		 */
 		String imagePath = "assets/icon.png";
 		InputStream imgStream = TeriorTextEditor.class
 				.getResourceAsStream(imagePath);
@@ -114,9 +120,15 @@ public class TeriorTextEditor
 
 		frame.setIconImage(icon);
 
+		/*
+		 * Initialize a FileChooser for later use.
+		 */
 		final JFileChooser fc = new JFileChooser();
 		frame.getContentPane().setLayout(new BorderLayout(0, 0));
 
+		/*
+		 * Create the tabs and parent panels
+		 */
 		JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
 		frame.getContentPane().add(tabs);
 
@@ -127,6 +139,13 @@ public class TeriorTextEditor
 		tabs.addTab("Settings", null, settingsPanel, null);
 		settingsPanel.setLayout(null);
 
+		/****************
+		 * EDITOR PANEL *
+		 ****************/
+
+		/*
+		 * Create the Editor with a theme
+		 */
 		Theme theme = null;
 		try
 		{
@@ -146,17 +165,45 @@ public class TeriorTextEditor
 		textArea.setFont(new Font("Ubuntu Mono", Font.PLAIN, 18));
 		editorPanel.setLayout(new BorderLayout(0, 0));
 
+		/*
+		 * Add the ScrollPane for the Editor
+		 */
+		RTextScrollPane scrollPane = new RTextScrollPane(textArea);
+		frame.addComponentListener(new ComponentAdapter()
+		{
+			@Override
+			public void componentResized(ComponentEvent e)
+			{
+				scrollPane.setBounds(scrollPane.getBounds().x,
+						scrollPane.getBounds().y, frame.getWidth() - 10,
+						frame.getHeight() - 10);
+			}
+		});
+		editorPanel.add(scrollPane);
+
+		/*
+		 * Create the File Label (File: blah/blah/moo.txt)
+		 */
 		JLabel lblFile = new JLabel("File: New");
 		lblFile.setFont(new Font("Tahoma", Font.BOLD, 11));
 		lblFile.setHorizontalAlignment(SwingConstants.CENTER);
 		editorPanel.add(lblFile, BorderLayout.NORTH);
 
+		/*
+		 * Create the menu bar
+		 */
 		JMenuBar menuBar = new JMenuBar();
 		frame.getContentPane().add(menuBar, BorderLayout.NORTH);
 
+		/*
+		 * Add the file button
+		 */
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 
+		/*
+		 * Add the "New" command
+		 */
 		JMenuItem mntmNew = new JMenuItem("New");
 		mntmNew.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
 				InputEvent.CTRL_MASK));
@@ -170,6 +217,9 @@ public class TeriorTextEditor
 		});
 		mnFile.add(mntmNew);
 
+		/*
+		 * Make the "Open" item
+		 */
 		JMenuItem mntmOpen = new JMenuItem("Open");
 		mntmOpen.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
 				InputEvent.CTRL_MASK));
@@ -215,6 +265,9 @@ public class TeriorTextEditor
 		});
 		mnFile.add(mntmOpen);
 
+		/*
+		 * Make the "Save" item
+		 */
 		JMenuItem mntmSave = new JMenuItem("Save");
 		mntmSave.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
 				InputEvent.CTRL_MASK));
@@ -269,6 +322,9 @@ public class TeriorTextEditor
 
 		mnFile.addSeparator();
 
+		/*
+		 * Make the "Change Language" item
+		 */
 		JMenuItem mntmChangeLang = new JMenuItem("Change Language");
 		mntmChangeLang.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
 				InputEvent.CTRL_MASK));
@@ -441,17 +497,9 @@ public class TeriorTextEditor
 
 		mnFile.addSeparator();
 
-		JMenuItem mntmQuit = new JMenuItem("Quit");
-		mntmQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
-				InputEvent.CTRL_MASK));
-		mntmQuit.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				System.exit(0);
-			}
-		});
-
+		/*
+		 * Make the "Spawn New Editor" item
+		 */
 		JMenuItem mntmSpawnNewEditor = new JMenuItem("Spawn New Editor");
 		mntmSpawnNewEditor.addActionListener(new ActionListener()
 		{
@@ -465,11 +513,31 @@ public class TeriorTextEditor
 		mntmSpawnNewEditor.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
 				InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
 		mnFile.add(mntmSpawnNewEditor);
+
+		/*
+		 * Make the "Quit" Item
+		 */
+		JMenuItem mntmQuit = new JMenuItem("Quit");
+		mntmQuit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
+				InputEvent.CTRL_MASK));
+		mntmQuit.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				System.exit(0);
+			}
+		});
 		mnFile.add(mntmQuit);
 
+		/*
+		 * Make "Edit" menu
+		 */
 		JMenu mnEdit = new JMenu("Edit");
 		menuBar.add(mnEdit);
 
+		/*
+		 * Make "Find and Replace" Item
+		 */
 		JMenuItem mntmFindReplace = new JMenuItem("Find and Replace");
 		mntmFindReplace.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_H,
 				InputEvent.CTRL_MASK));
@@ -487,19 +555,20 @@ public class TeriorTextEditor
 		});
 		mnEdit.add(mntmFindReplace);
 
-		RTextScrollPane scrollPane = new RTextScrollPane(textArea);
-		frame.addComponentListener(new ComponentAdapter()
-		{
-			@Override
-			public void componentResized(ComponentEvent e)
-			{
-				scrollPane.setBounds(scrollPane.getBounds().x,
-						scrollPane.getBounds().y, frame.getWidth() - 10,
-						frame.getHeight() - 10);
-			}
-		});
-		editorPanel.add(scrollPane);
+		/******************
+		 * SETTINGS PANEL *
+		 ******************/
 
+		/*
+		 * Make the label to help the user with the dropdown
+		 */
+		JLabel lblTheme = new JLabel("Theme");
+		lblTheme.setBounds(10, 11, 46, 14);
+		settingsPanel.add(lblTheme);
+
+		/*
+		 * Make the theme dropdown
+		 */
 		JComboBox<Object> themeChooser = new JComboBox<Object>();
 		themeChooser.addActionListener(new ActionListener()
 		{
@@ -530,10 +599,9 @@ public class TeriorTextEditor
 		themeChooser.setBounds(10, 30, 200, 20);
 		settingsPanel.add(themeChooser);
 
-		JLabel lblTheme = new JLabel("Theme");
-		lblTheme.setBounds(10, 11, 46, 14);
-		settingsPanel.add(lblTheme);
-
+		/*
+		 * Code Folding Checkbox
+		 */
 		JCheckBox chckbxCodeFolding = new JCheckBox("Code Folding");
 		chckbxCodeFolding.addActionListener(new ActionListener()
 		{
@@ -546,38 +614,91 @@ public class TeriorTextEditor
 		chckbxCodeFolding.setBounds(10, 76, 87, 23);
 		settingsPanel.add(chckbxCodeFolding);
 
+		/*
+		 * Resizable Window Checkbox
+		 */
+		JCheckBox chckbxResizableWindow = new JCheckBox("Resizable Window");
+		chckbxResizableWindow.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				frame.setResizable(chckbxResizableWindow.isSelected());
+			}
+		});
+		chckbxResizableWindow.setBounds(99, 76, 111, 23);
+		settingsPanel.add(chckbxResizableWindow);
+
+		/*
+		 * Add the label to help with the Editor sizing inputs
+		 */
+		JLabel lblEditorSizing = new JLabel("Editor Sizing");
+		lblEditorSizing.setBounds(10, 118, 97, 14);
+		settingsPanel.add(lblEditorSizing);
+
+		/*
+		 * Add the Rows input
+		 */
 		JTextField textFieldRows = new JTextField();
 		textFieldRows.setText("21");
 		textFieldRows.setBounds(10, 143, 86, 20);
 		settingsPanel.add(textFieldRows);
 		textFieldRows.setColumns(10);
 
+		/*
+		 * In between label
+		 */
 		JLabel lblRowsBy = new JLabel("rows by");
 		lblRowsBy.setBounds(106, 146, 46, 14);
 		settingsPanel.add(lblRowsBy);
 
+		/*
+		 * Add the Columns input
+		 */
 		JTextField textFieldColumns = new JTextField();
 		textFieldColumns.setText("59");
 		textFieldColumns.setBounds(153, 143, 86, 20);
 		settingsPanel.add(textFieldColumns);
 		textFieldColumns.setColumns(10);
 
+		/*
+		 * In between label
+		 */
 		JLabel lblColumns = new JLabel("columns");
 		lblColumns.setBounds(249, 146, 46, 14);
 		settingsPanel.add(lblColumns);
 
-		JLabel lblEditorSizing = new JLabel("Editor Sizing");
-		lblEditorSizing.setBounds(10, 118, 97, 14);
-		settingsPanel.add(lblEditorSizing);
+		/*
+		 * Button to submit the rows and columns sizing
+		 */
+		JButton btnSubmitSizing = new JButton("Submit Sizing");
+		btnSubmitSizing.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				textArea.setColumns(Integer.parseInt(textFieldColumns.getText()));
+				textArea.setRows(Integer.parseInt(textFieldRows.getText()));
+			}
+		});
+		btnSubmitSizing.setBounds(298, 142, 97, 23);
+		settingsPanel.add(btnSubmitSizing);
 
+		/*
+		 * Font Slider Help Label
+		 */
 		JLabel lblFontSize = new JLabel("Font Size");
 		lblFontSize.setBounds(10, 174, 46, 14);
 		settingsPanel.add(lblFontSize);
 
+		/*
+		 * Current font size for clarity
+		 */
 		JLabel lblFontSizeCurrent = new JLabel("Font Size: 18");
 		lblFontSizeCurrent.setBounds(10, 219, 86, 14);
 		settingsPanel.add(lblFontSizeCurrent);
 
+		/*
+		 * Font Size Slider
+		 */
 		JSlider sliderFontSize = new JSlider();
 		sliderFontSize.setValue(18);
 		sliderFontSize.addChangeListener(new ChangeListener()
@@ -592,29 +713,6 @@ public class TeriorTextEditor
 		});
 		sliderFontSize.setBounds(10, 192, 200, 26);
 		settingsPanel.add(sliderFontSize);
-
-		JCheckBox chckbxResizableWindow = new JCheckBox("Resizable Window");
-		chckbxResizableWindow.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				frame.setResizable(chckbxResizableWindow.isSelected());
-			}
-		});
-		chckbxResizableWindow.setBounds(99, 76, 111, 23);
-		settingsPanel.add(chckbxResizableWindow);
-
-		JButton btnSubmitSizing = new JButton("Submit Sizing");
-		btnSubmitSizing.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				textArea.setColumns(Integer.parseInt(textFieldColumns.getText()));
-				textArea.setRows(Integer.parseInt(textFieldRows.getText()));
-			}
-		});
-		btnSubmitSizing.setBounds(298, 142, 97, 23);
-		settingsPanel.add(btnSubmitSizing);
 	}
 
 	public static void infoBox(String infoMessage)
