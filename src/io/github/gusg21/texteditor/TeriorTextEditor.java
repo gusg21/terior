@@ -1,14 +1,21 @@
 package io.github.gusg21.texteditor;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.EventQueue;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,6 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.DefaultComboBoxModel;
@@ -58,8 +68,7 @@ public class TeriorTextEditor
 	{
 		try
 		{
-			UIManager
-					.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Throwable e)
 		{
 			e.printStackTrace();
@@ -155,15 +164,67 @@ public class TeriorTextEditor
 		{
 			e2.printStackTrace();
 		}
+		editorPanel.setLayout(new BorderLayout(0, 0));
+
+		/*
+		 * Create the File Label (File: blah/blah/moo.txt)
+		 */
+		JLabel lblFile = new JLabel("File: New");
+		lblFile.setFont(new Font("Tahoma", Font.BOLD, 11));
+		lblFile.setHorizontalAlignment(SwingConstants.CENTER);
+		editorPanel.add(lblFile, BorderLayout.NORTH);
+
+		/*
+		 * Create the footer with Pos and Language
+		 */
+		JPanel footerPanel = new JPanel();
+		editorPanel.add(footerPanel, BorderLayout.SOUTH);
+		footerPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+
+		/*
+		 * Pos Label
+		 */
+		JLabel lblPos = new JLabel("Pos: 0, 0");
+		footerPanel.add(lblPos);
 
 		RSyntaxTextArea textArea = new RSyntaxTextArea(21, 59);
+		textArea.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			// Update Pos Label
+			public void mouseClicked(MouseEvent e)
+			{
+				lblPos.setText("Pos: "
+						+ String.valueOf(textArea.getCaretPosition() + 1)
+						+ ", " + String.valueOf(textArea.getCaretLineNumber()));
+			}
+		});
+		textArea.addKeyListener(new KeyAdapter()
+		{
+			@Override
+			public void keyTyped(KeyEvent e)
+			{
+				lblPos.setText("Pos: "
+						+ String.valueOf(textArea.getCaretPosition() + 1)
+						+ ", " + String.valueOf(textArea.getCaretLineNumber()));
+			}
+		});
 
 		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_PYTHON);
 		textArea.setCodeFoldingEnabled(true);
 		theme.apply(textArea);
 
-		textArea.setFont(new Font("Ubuntu Mono", Font.PLAIN, 18));
-		editorPanel.setLayout(new BorderLayout(0, 0));
+		textArea.setFont(new Font(Config.FONT, Font.PLAIN, 18));
+
+		/*
+		 * Language Label
+		 */
+		JLabel lblLanguage = new JLabel("");
+		lblLanguage.setText("Language: "
+				+ textArea.getSyntaxEditingStyle().substring(5, 6)
+						.toUpperCase()
+				+ textArea.getSyntaxEditingStyle().substring(6));
+		footerPanel.add(lblLanguage);
 
 		/*
 		 * Add the ScrollPane for the Editor
@@ -179,15 +240,9 @@ public class TeriorTextEditor
 						frame.getHeight() - 10);
 			}
 		});
-		editorPanel.add(scrollPane);
-
-		/*
-		 * Create the File Label (File: blah/blah/moo.txt)
-		 */
-		JLabel lblFile = new JLabel("File: New");
-		lblFile.setFont(new Font("Tahoma", Font.BOLD, 11));
-		lblFile.setHorizontalAlignment(SwingConstants.CENTER);
-		editorPanel.add(lblFile, BorderLayout.NORTH);
+		scrollPane.getGutter().setLineNumberFont(
+				new Font(Config.FONT, Font.PLAIN, 15));
+		editorPanel.add(scrollPane, BorderLayout.CENTER);
 
 		/*
 		 * Create the menu bar
@@ -490,6 +545,11 @@ public class TeriorTextEditor
 								+ langName.toLowerCase()
 								+ ". Language not changed.");
 					}
+
+					lblLanguage.setText("Language: "
+							+ textArea.getSyntaxEditingStyle().substring(5, 6)
+									.toUpperCase()
+							+ textArea.getSyntaxEditingStyle().substring(6));
 				}
 			}
 		});
@@ -555,6 +615,38 @@ public class TeriorTextEditor
 		});
 		mnEdit.add(mntmFindReplace);
 
+		mnEdit.addSeparator();
+
+		/*
+		 * Add "Tabs to Spaces" item
+		 */
+		JMenuItem mntmTabsToSpaces = new JMenuItem("Tabs to Spaces");
+		mntmTabsToSpaces.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				textArea.convertTabsToSpaces();
+			}
+		});
+		mntmTabsToSpaces.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T,
+				InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
+		mnEdit.add(mntmTabsToSpaces);
+
+		/*
+		 * Add "Spaces to Tabs" item
+		 */
+		JMenuItem mntmSpacesToTabs = new JMenuItem("Spaces to Tabs");
+		mntmSpacesToTabs.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				textArea.convertSpacesToTabs();
+			}
+		});
+		mntmSpacesToTabs.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+				InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
+		mnEdit.add(mntmSpacesToTabs);
+
 		/******************
 		 * SETTINGS PANEL *
 		 ******************/
@@ -589,7 +681,7 @@ public class TeriorTextEditor
 
 				theme.apply(textArea);
 
-				textArea.setFont(new Font("Ubuntu Mono", Font.PLAIN, 18));
+				textArea.setFont(new Font(Config.FONT, Font.PLAIN, 18));
 			}
 		});
 		themeChooser.setModel(new DefaultComboBoxModel<Object>(
@@ -629,10 +721,41 @@ public class TeriorTextEditor
 		settingsPanel.add(chckbxResizableWindow);
 
 		/*
+		 * EOL Markers Checkbox
+		 */
+		JCheckBox chckbxShowEolMarkers = new JCheckBox("Show EOL Markers");
+		chckbxShowEolMarkers.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				textArea.setEOLMarkersVisible(chckbxShowEolMarkers.isSelected());
+			}
+		});
+		chckbxShowEolMarkers.setBounds(10, 102, 115, 23);
+		settingsPanel.add(chckbxShowEolMarkers);
+
+		/*
+		 * Show Bracket Animation Checkbox
+		 */
+		JCheckBox chckbxShowBracketAnimations = new JCheckBox(
+				"Show Bracket Animations");
+		chckbxShowBracketAnimations.setSelected(true);
+		chckbxShowBracketAnimations.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				textArea.setAnimateBracketMatching(chckbxShowBracketAnimations
+						.isSelected());
+			}
+		});
+		chckbxShowBracketAnimations.setBounds(127, 102, 145, 23);
+		settingsPanel.add(chckbxShowBracketAnimations);
+
+		/*
 		 * Add the label to help with the Editor sizing inputs
 		 */
 		JLabel lblEditorSizing = new JLabel("Editor Sizing");
-		lblEditorSizing.setBounds(10, 118, 97, 14);
+		lblEditorSizing.setBounds(10, 157, 97, 14);
 		settingsPanel.add(lblEditorSizing);
 
 		/*
@@ -640,7 +763,7 @@ public class TeriorTextEditor
 		 */
 		JTextField textFieldRows = new JTextField();
 		textFieldRows.setText("21");
-		textFieldRows.setBounds(10, 143, 86, 20);
+		textFieldRows.setBounds(10, 182, 86, 20);
 		settingsPanel.add(textFieldRows);
 		textFieldRows.setColumns(10);
 
@@ -648,7 +771,7 @@ public class TeriorTextEditor
 		 * In between label
 		 */
 		JLabel lblRowsBy = new JLabel("rows by");
-		lblRowsBy.setBounds(106, 146, 46, 14);
+		lblRowsBy.setBounds(106, 185, 46, 14);
 		settingsPanel.add(lblRowsBy);
 
 		/*
@@ -656,7 +779,7 @@ public class TeriorTextEditor
 		 */
 		JTextField textFieldColumns = new JTextField();
 		textFieldColumns.setText("59");
-		textFieldColumns.setBounds(153, 143, 86, 20);
+		textFieldColumns.setBounds(153, 182, 86, 20);
 		settingsPanel.add(textFieldColumns);
 		textFieldColumns.setColumns(10);
 
@@ -664,7 +787,7 @@ public class TeriorTextEditor
 		 * In between label
 		 */
 		JLabel lblColumns = new JLabel("columns");
-		lblColumns.setBounds(249, 146, 46, 14);
+		lblColumns.setBounds(249, 185, 46, 14);
 		settingsPanel.add(lblColumns);
 
 		/*
@@ -679,21 +802,21 @@ public class TeriorTextEditor
 				textArea.setRows(Integer.parseInt(textFieldRows.getText()));
 			}
 		});
-		btnSubmitSizing.setBounds(298, 142, 97, 23);
+		btnSubmitSizing.setBounds(298, 181, 97, 23);
 		settingsPanel.add(btnSubmitSizing);
 
 		/*
 		 * Font Slider Help Label
 		 */
 		JLabel lblFontSize = new JLabel("Font Size");
-		lblFontSize.setBounds(10, 174, 46, 14);
+		lblFontSize.setBounds(10, 213, 46, 14);
 		settingsPanel.add(lblFontSize);
 
 		/*
 		 * Current font size for clarity
 		 */
 		JLabel lblFontSizeCurrent = new JLabel("Font Size: 18");
-		lblFontSizeCurrent.setBounds(10, 219, 86, 14);
+		lblFontSizeCurrent.setBounds(10, 258, 86, 14);
 		settingsPanel.add(lblFontSizeCurrent);
 
 		/*
@@ -707,12 +830,45 @@ public class TeriorTextEditor
 			{
 				textArea.setFont(new Font("Ubuntu", Font.PLAIN, sliderFontSize
 						.getValue()));
+				scrollPane.getGutter().setLineNumberFont(
+						new Font(Config.FONT, Font.PLAIN, sliderFontSize
+								.getValue() - 3));
 				lblFontSizeCurrent.setText("Font Size: "
 						+ String.valueOf(sliderFontSize.getValue()));
 			}
 		});
-		sliderFontSize.setBounds(10, 192, 200, 26);
+		sliderFontSize.setBounds(10, 231, 200, 26);
 		settingsPanel.add(sliderFontSize);
+
+		/*
+		 * Add GitHub link
+		 */
+		JLabel lblGithubLink = new JLabel("http://github.com/gusg21/terior/");
+		lblGithubLink.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				try
+				{
+					java.awt.Desktop.getDesktop().browse(
+							new URI(lblGithubLink.getText()));
+				} catch (IOException | URISyntaxException e1)
+				{
+					e1.printStackTrace();
+				}
+			}
+		});
+		lblGithubLink.setForeground(Color.BLUE);
+		Font font = lblGithubLink.getFont();
+		@SuppressWarnings("unchecked")
+		Map<TextAttribute, Integer> attributes = (Map<TextAttribute, Integer>) font
+				.getAttributes();
+		attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+		lblGithubLink.setFont(font.deriveFont(attributes));
+		lblGithubLink.setBounds(10, 541, 163, 14);
+		lblGithubLink.setCursor(new Cursor(Cursor.HAND_CURSOR));
+		settingsPanel.add(lblGithubLink);
 	}
 
 	public static void infoBox(String infoMessage)
